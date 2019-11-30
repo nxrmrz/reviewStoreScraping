@@ -2,7 +2,7 @@ from selenium.webdriver import Chrome
 from selenium.webdriver.common.keys import Keys
 from time import sleep
 from bs4 import BeautifulSoup, Comment
-import pandas as pd 
+import csv
 import lxml
 
 #setting up an automated google chrome browser. the webdriver points to where the chrome driver is downloaded
@@ -30,24 +30,47 @@ while True:
         break
     last_height = new_height
 
+    #clicking show more button when it appears
+    if driver.find_elements_by_xpath("//div[@class='PFAhAf']/div[@role='button']"):
+        driver.find_elements_by_xpath("//div[@class='PFAhAf']/div[@role='button']")[0].click()
+
 #parsing the page after scrolling down to bottom
 html = driver.page_source
 soup = BeautifulSoup(html, 'lxml')
 
-# button
-# if driver.find_elements_by_xpath("//div[@class='PFAhAf']/div[@role='button']"):
-#     print("Element Exists")
+# opening a csv file for writing reviews into, instantiating writer object
+googReviews = open('SparkSportReviews-Google.csv', 'w')
+csvWriter = csv.writer(googReviews)
 
-# # get reviews
-count = 0
+# writing the reviews header
+reviews_head = ["username", "comment", "date", "rating"]
+csvWriter.writerow(reviews_head)
+
+#getting each review
 reviews = soup.findAll("div",{'jscontroller' : 'H6eOGe'})
 
+#for each review, get the username, comment, date and rating
 for review in reviews:
-    count = count + 1
+    entry = []
 
-print(count) #prints # of reviews
+    userName = review.find("span", {'class' : 'X43Kjb'}).text
+    entry.append(userName)
 
-# #get username, rating, date, comment
+    comment = review.find("span", {'jsname': 'bN97Pc'}).text
+    entry.append(comment)
+
+    date = review.find("span", {'class': 'p2TkOb'}).text
+    entry.append(date)
+
+    #change rating to a number instead of a phrase, grabbing the number from that phrase
+    rating = review.find("div", {'role': 'img'})['aria-label']
+    numRating = rating.split()[1]
+    entry.append(numRating)
+
+    csvWriter.writerow(entry)
+
+googReviews.close()
+
 
 
 
